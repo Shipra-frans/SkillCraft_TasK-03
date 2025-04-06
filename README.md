@@ -2,7 +2,7 @@
 Sudoku Puzzle Solver using HTML , CSS , Java Script ,Python (FLASK)
 
 🧩 Sudoku Puzzle Solver
-A fully functional Sudoku Puzzle Solver web application built with HTML, CSS, JavaScript, and Python (Flask). Users can input a Sudoku puzzle or load a random one, and the app will solve it instantly using a backtracking algorithm on the backend.It is runed as a server.
+A fully functional Sudoku Puzzle Solver web application built with HTML, CSS, JavaScript, and Python (Flask). Users can input a Sudoku puzzle or load a random one, and the app will solve it instantly using a backtracking algorithm on the backend. It is runed as a server.
 
 🎯 Features
 ✅ Input your own Sudoku puzzle or generate a random one.
