@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Play Sudoku online with an interactive solver." />
+    <meta name="author" content="Shipra Francisca" />
+    <title>Sudoku Puzzle</title>
+    <style>
+        h1 {
+            text-align: center;
+            font-size: 50px;
+            text-shadow: 5px 3px firebrick, 3px 4px chartreuse;
+            color: black;
+        }
+        body {
+            background-image: url("{{ url_for('static', filename='images/fether.jpg') }}");
+            background-size: cover;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            perspective: 1000px;
+        }
+        .scene {
+            width: 150px;
+            height: 150px;
+            position: absolute;
+            left: 5%;
+            top: calc(10% + 5px);
+            transform-style: preserve-3d;
+        }
+        .cube {
+            width: 100%;
+            height: 100%;
+            left: 5%;
+            position: absolute;
+            transform-style: preserve-3d;
+            animation: rotateCube 5s infinite linear;
+        }
+        .face {
+            left: 5%;
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            background: linear-gradient(135deg,brown,crimson,red,orangered ,darkorange,gold,burlywood ,beige);
+            border: 3px solid black;
+            text-align: center;
+            line-height: 150px;
+            font-size: 80px;
+            color:black;
+        }
+        .front  { transform: translateZ(75px); }
+        .back   { transform: rotateY(180deg) translateZ(75px); }
+        .left   { transform: rotateY(-90deg) translateZ(75px); }
+        .right  { transform: rotateY(90deg) translateZ(75px); }
+        .top    { transform: rotateX(90deg) translateZ(75px); }
+        .bottom { transform: rotateX(-90deg) translateZ(75px); }
+        @keyframes rotateCube {
+            from { transform: rotateX(0deg) rotateY(0deg); }
+            to { transform: rotateX(360deg) rotateY(360deg); }
+        }
+        table {
+            margin-top: 20px;
+            border-collapse: collapse;
+            box-sizing: border-box;
+        }
+        td {
+            width: 40px;
+            height: 40px;
+            border: 1px solid black;
+            text-align: center;
+            background: transparent;
+            position: relative;
+        }
+        td:nth-child(3n) { border-right: 5px solid black; }
+        tr:nth-child(3n) td { border-bottom: 5px solid black; }
+        td:first-child, td:nth-child(4), td:nth-child(7) { border-left: 5px solid black; }
+        tr:first-child td, tr:nth-child(4) td, tr:nth-child(7) td { border-top: 5px solid black; }
+        input {
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            font-size: 25px;
+            border: none;
+            background: transparent;
+            outline: none;
+        }
+        button {
+            margin-top: 20px;
+            font-size: 28px;
+            cursor: pointer;
+            padding: 10px 20px;
+            border: none;
+            background-color: navy;
+            color: white;
+            font-family:serif;
+            border-radius: 5px;
+        }
+        button:hover {
+            color: black;
+            background: linear-gradient(to right,crimson, #f44336,dodgerblue, #1ee9e9);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+        button:active{
+            box-shadow: 3px 5px black;
+            transform:translateY(3px);
+        }
+    </style>
+</head>
+<body>
+    <h1>Sudoku The Puzzle</h1>
+    <div class="scene">
+        <div class="cube">
+            <div class="face front">6</div>
+            <div class="face back">5</div>
+            <div class="face left">4</div>
+            <div class="face right">3</div>
+            <div class="face top">1</div>
+            <div class="face bottom">2</div>
+        </div>
+    </div>
+
+    <table id="sudoku-grid">
+        {% for i in range(9) %}
+        <tr>
+            {% for j in range(9) %}
+            <td>
+                <input type="text" id="cell-{{i}}-{{j}}" maxlength="1" oninput="validateInput(this)">
+            </td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </table>
+
+    <button onclick="solveSudoku()">Solve</button>
+
+    <script>
+        function validateInput(cell) {
+            cell.value = cell.value.replace(/[^1-9]/g, '').slice(0, 1);
+        }
+
+        function solveSudoku() {
+            let board = [];
+            let rows = document.querySelectorAll("#sudoku-grid tr");
+
+            if (!rows || rows.length !== 9) {
+                alert("Error: Sudoku grid is not properly loaded.");
+                return;
+            }
+
+            rows.forEach((row, i) => {
+                let cols = row.querySelectorAll("td input");
+                if (cols.length !== 9) {
+                    alert("Error: Incomplete row detected.");
+                    return;
+                }
+                board[i] = [];
+                cols.forEach(cell => {
+                    board[i].push(cell.value.trim() ? parseInt(cell.value) : 0);
+                });
+            });
+
+            fetch("/solve", {
+                method: "POST",
+                body: JSON.stringify({ board }),
+                headers: { "Content-Type": "application/json" }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Server error");
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.solution) {
+                    data.solution.forEach((row, i) => {
+                        let cols = rows[i].querySelectorAll("td input");
+                        row.forEach((num, j) => {
+                            cols[j].value = num;
+                        });
+                    });
+                } else {
+                    alert("No solution found!");
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("An error occurred while solving the Sudoku.");
+            });
+        }
+    </script>
+</body>
+</html>
